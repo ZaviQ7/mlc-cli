@@ -10,6 +10,7 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 
 # Args
 CLI_VENV="${1:-mlc-cli-venv}"
+TVM_SOURCE="${2:-bundled}"  # bundled, relax, or custom
 
 if ! conda env list | awk '{print $1}' | grep -qx "${CLI_VENV}"; then
     conda create -n "${CLI_VENV}" -c conda-forge \

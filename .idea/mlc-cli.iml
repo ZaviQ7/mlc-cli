@@ -8,9 +8,6 @@
   <component name="Go" enabled="true" />
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/mlc-llm/python" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tvm/3rdparty/tvm-ffi" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tvm/3rdparty/tvm-ffi/python" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/mlc-llm" />
       <excludeFolder url="file://$MODULE_DIR$/models" />
       <excludeFolder url="file://$MODULE_DIR$/tvm" />

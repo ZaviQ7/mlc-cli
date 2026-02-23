@@ -74,8 +74,10 @@ func (p *Platform) install(pkg string) {
 			return
 		}
 		cmd = exec.Command("bash", scriptPath)
-	case "mlc", "tvm", "wheels":
+	case "tvm", "wheels":
 		cmd = exec.Command("bash", scriptPath, p.CliEnv)
+	case "mlc":
+		cmd = exec.Command("bash", scriptPath, p.CliEnv, p.TVMSource)
 	default:
 		cmd = exec.Command("bash", scriptPath)
 	}
