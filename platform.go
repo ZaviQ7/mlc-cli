@@ -36,10 +36,10 @@ func (p *Platform) build(pkg string) {
 	if pkg == "mlc" {
 		if p.OperatingSystem == "mac" {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL)
+				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL, p.TVMSource)
 		} else {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo)
+				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo, p.TVMSource)
 		}
 	} else if pkg == "tvm" {
 		if p.OperatingSystem == "mac" {
@@ -159,16 +159,23 @@ func (p *Platform) ConfigureBuildOptions() {
 	// Prompt for TVM source selection
 	tvmSourcePrompt := promptui.Select{
 		Label: "Select TVM source",
-		Items: []string{"Use bundled TVM (from mlc-llm/3rdparty)", "Use custom TVM (from repo_root/tvm)"},
+		Items: []string{
+			"Use bundled TVM (from mlc-llm/3rdparty)",
+			"Use mlc-ai/relax stable (clones mlc branch)",
+			"Use custom TVM (from repo_root/tvm)",
+		},
 	}
 	_, tvmSourceSelection, err := tvmSourcePrompt.Run()
 	if err != nil {
 		handlePromptError(err)
 	}
 
-	if tvmSourceSelection == "Use custom TVM (from repo_root/tvm)" {
+	switch tvmSourceSelection {
+	case "Use mlc-ai/relax stable (clones mlc branch)":
+		p.TVMSource = "relax"
+	case "Use custom TVM (from repo_root/tvm)":
 		p.TVMSource = "custom"
-	} else {
+	default:
 		p.TVMSource = "bundled"
 	}
 

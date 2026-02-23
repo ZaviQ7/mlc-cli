@@ -22,9 +22,38 @@ conda activate tvm-build-venv
 # Set library path for cmake to find zstd
 export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
 
-# clone from GitHub (or use existing)
-if [ ! -d "tvm" ]; then
-    git clone --recursive -b mlc https://github.com/mlc-ai/relax.git tvm
+# Determine TVM directory based on source selection
+if [ "${TVM_SOURCE}" = "custom" ]; then
+    TVM_DIR="${REPO_ROOT}/tvm"
+    echo "Using custom TVM from ${TVM_DIR}"
+    if [ ! -d "${TVM_DIR}" ]; then
+        echo "Error: Custom TVM directory not found at ${TVM_DIR}"
+        echo "Please clone TVM to ${TVM_DIR} or select bundled TVM option"
+        exit 1
+    fi
+elif [ "${TVM_SOURCE}" = "relax" ]; then
+    TVM_DIR="${REPO_ROOT}/tvm"
+    echo "Using mlc-ai/relax (mlc branch) at ${TVM_DIR}"
+    if [ ! -d "${TVM_DIR}" ]; then
+        echo "Cloning mlc-ai/relax on mlc branch..."
+        git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_DIR}"
+    elif [ "$(git -C "${TVM_DIR}" rev-parse --abbrev-ref HEAD)" != "mlc" ]; then
+        echo "Switching TVM to mlc branch (mlc-ai/relax)..."
+        git -C "${TVM_DIR}" remote set-url origin https://github.com/mlc-ai/relax.git
+        git -C "${TVM_DIR}" fetch origin mlc
+        git -C "${TVM_DIR}" checkout mlc
+        git -C "${TVM_DIR}" submodule update --init --recursive
+    else
+        echo "TVM is already on mlc branch."
+    fi
+else
+    TVM_DIR="${REPO_ROOT}/mlc-llm/3rdparty/tvm"
+    echo "Using bundled TVM from ${TVM_DIR}"
+    if [ ! -d "${TVM_DIR}" ]; then
+        echo "Error: Bundled TVM directory not found at ${TVM_DIR}"
+        echo "Please ensure mlc-llm is properly initialized with submodules"
+        exit 1
+    fi
 fi
 
 cd "${TVM_DIR}"
@@ -59,13 +88,3 @@ cmake ..
 make -j$(nproc)
 cd ..
 
-# # Build wheels and copy to wheels directory
-# mkdir -p "${WHEELS_DIR}"
-
-# # Build TVM wheel
-# cd python
-# pip install build
-# python -m build --wheel --outdir "${WHEELS_DIR}"
-# cd ..
-
-# echo "TVM wheels created in ${WHEELS_DIR}"

@@ -14,7 +14,7 @@ conda activate "${CLI_VENV}"
 mkdir -p models
 if [ -z "${MODEL_NAME}" ]; then
     if [ -d "models" ]; then
-        MODEL_NAME=$(find -1 models 2>/dev/null | head -n 1)
+        MODEL_NAME=$(ls -1 models 2>/dev/null | head -n 1)
     fi
 fi
 MODEL_PATH="models/${MODEL_NAME}"

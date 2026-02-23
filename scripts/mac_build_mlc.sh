@@ -8,12 +8,39 @@ ROCM="${3:-n}"
 VULKAN="${4:-n}"
 METAL="${5:-y}"
 OPEN_CL="${6:-n}"
+TVM_SOURCE="${7:-bundled}"  # bundled, relax, or custom
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 WHEELS_DIR="${REPO_ROOT}/wheels"
-# MLC-LLM should use its bundled TVM submodule (3rdparty/tvm), not standalone TVM
-TVM_SOURCE_DIR=""
+
+# Determine TVM_SOURCE_DIR based on source selection
+# Empty string = use bundled TVM (mlc-llm/3rdparty/tvm)
+if [ "${TVM_SOURCE}" = "relax" ]; then
+    TVM_SOURCE_DIR="${REPO_ROOT}/tvm"
+    if [ ! -d "${TVM_SOURCE_DIR}" ]; then
+        echo "Cloning mlc-ai/relax on mlc branch..."
+        git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_SOURCE_DIR}"
+    elif [ "$(git -C "${TVM_SOURCE_DIR}" rev-parse --abbrev-ref HEAD)" != "mlc" ]; then
+        echo "Switching TVM to mlc branch (mlc-ai/relax)..."
+        git -C "${TVM_SOURCE_DIR}" remote set-url origin https://github.com/mlc-ai/relax.git
+        git -C "${TVM_SOURCE_DIR}" fetch origin mlc
+        git -C "${TVM_SOURCE_DIR}" checkout mlc
+        git -C "${TVM_SOURCE_DIR}" submodule update --init --recursive
+    else
+        echo "TVM is already on mlc branch."
+    fi
+elif [ "${TVM_SOURCE}" = "custom" ]; then
+    TVM_SOURCE_DIR="${REPO_ROOT}/tvm"
+    if [ ! -d "${TVM_SOURCE_DIR}" ]; then
+        echo "Error: Custom TVM directory not found at ${TVM_SOURCE_DIR}"
+        exit 1
+    fi
+    echo "Using custom TVM from ${TVM_SOURCE_DIR}"
+else
+    TVM_SOURCE_DIR=""
+    echo "Using bundled TVM (mlc-llm/3rdparty/tvm)"
+fi
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
@@ -30,21 +57,6 @@ conda activate "${BUILD_VENV}"
 # Set library path for cmake to find zstd
 export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
 
-# Ensure root tvm is on the mlc branch (mlc-ai/relax, compatible with mlc-llm)
-if [ ! -d "${TVM_SOURCE_DIR}" ]; then
-    echo "Cloning TVM (mlc-ai/relax) on mlc branch..."
-    git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_SOURCE_DIR}"
-elif [ "$(git -C "${TVM_SOURCE_DIR}" rev-parse --abbrev-ref HEAD)" != "mlc" ]; then
-    echo "Switching root tvm to mlc branch (mlc-ai/relax)..."
-    git -C "${TVM_SOURCE_DIR}" remote set-url origin https://github.com/mlc-ai/relax.git
-    git -C "${TVM_SOURCE_DIR}" fetch origin mlc
-    git -C "${TVM_SOURCE_DIR}" checkout mlc
-    git -C "${TVM_SOURCE_DIR}" submodule update --init --recursive
-else
-    echo "Root tvm is already on mlc branch."
-fi
-
-# Check if mlc-llm directory exists
 # Set macOS deployment target to current OS version
 export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d. -f1)
 

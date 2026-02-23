@@ -30,7 +30,7 @@ else
   conda create -y -n "${BUILD_VENV}" -c conda-forge python=3.13 pip
 fi
 
-conda activate mlc-cli-venv
+conda activate "${BUILD_VENV}"
 
 python -m pip install --upgrade pip
 python -m pip install "${WHEELS[@]}"
