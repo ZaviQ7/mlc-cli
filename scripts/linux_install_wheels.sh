@@ -23,9 +23,9 @@ if [ ${#WHEELS[@]} -eq 0 ]; then
 fi
 
 if conda env list | awk '{print $1}' | grep -qx "${CLI_VENV}"; then
-  echo "Conda env mlc-cli-venv already exists; reusing it."
+  echo "Conda env ${CLI_VENV} already exists; reusing it."
 else
-  conda create -y -n mlc-cli-venv -c conda-forge python=3.13 pip
+  conda create -y -n "${CLI_VENV}" -c conda-forge python=3.13 pip
 fi
 
 conda activate "${CLI_VENV}"

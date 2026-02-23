@@ -30,12 +30,30 @@ conda activate "${BUILD_VENV}"
 # Set library path for cmake to find zstd
 export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
 
+# Ensure root tvm is on the mlc branch (mlc-ai/relax, compatible with mlc-llm)
+if [ ! -d "${TVM_SOURCE_DIR}" ]; then
+    echo "Cloning TVM (mlc-ai/relax) on mlc branch..."
+    git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_SOURCE_DIR}"
+elif [ "$(git -C "${TVM_SOURCE_DIR}" rev-parse --abbrev-ref HEAD)" != "mlc" ]; then
+    echo "Switching root tvm to mlc branch (mlc-ai/relax)..."
+    git -C "${TVM_SOURCE_DIR}" remote set-url origin https://github.com/mlc-ai/relax.git
+    git -C "${TVM_SOURCE_DIR}" fetch origin mlc
+    git -C "${TVM_SOURCE_DIR}" checkout mlc
+    git -C "${TVM_SOURCE_DIR}" submodule update --init --recursive
+else
+    echo "Root tvm is already on mlc branch."
+fi
+
+# Check if mlc-llm directory exists
 # Set macOS deployment target to current OS version
 export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d. -f1)
 
 # clone from GitHub (or use existing)
 if [ ! -d "mlc-llm" ]; then
+    echo "Cloning mlc-llm..."
     git clone --recursive https://github.com/mlc-ai/mlc-llm.git
+else
+    echo "mlc-llm directory already exists, skipping clone."
 fi
 cd mlc-llm/
 
@@ -60,7 +78,7 @@ cd ..
 mkdir -p "${WHEELS_DIR}"
 
 cd python
-pip install build
+python -m pip install build
 python -m build --wheel --outdir "${WHEELS_DIR}"
 cd ..
 

@@ -13,10 +13,25 @@ OVERRIDES="${5}"
 # Set CUDA environment variables
 DEVICE_FLAG=""
 if [ "${DEVICE}" = "cuda" ]; then
-    export PATH=/usr/local/cuda-13.0/bin:$PATH
-    export LD_LIBRARY_PATH=/usr/local/cuda-13.0/lib64:$LD_LIBRARY_PATH
-    export CUDACXX=/usr/local/cuda-13.0/bin/nvcc
-    export CUDA_HOME=/usr/local/cuda-13.0
+    # Dynamically find nvcc to set correct CUDA paths
+    if command -v nvcc > /dev/null 2>&1; then
+        NVCC_PATH="$(command -v nvcc)"
+    elif [[ -x /usr/local/cuda/bin/nvcc ]]; then
+        NVCC_PATH="/usr/local/cuda/bin/nvcc"
+    else
+        echo "Error: nvcc not found. Please install the CUDA toolkit or add it to PATH."
+        exit 1
+    fi
+    NVCC_REAL="$(readlink -f "${NVCC_PATH}" 2>/dev/null || true)"
+    NVCC_REAL="${NVCC_REAL:-${NVCC_PATH}}"
+    CUDA_BIN_DIR="$(dirname "${NVCC_REAL}")"
+    CUDA_HOME="$(dirname "${CUDA_BIN_DIR}")"
+    export PATH="${CUDA_BIN_DIR}:${PATH}"
+    export CUDACXX="${NVCC_REAL}"
+    export CUDA_HOME="${CUDA_HOME}"
+    if [[ -d "${CUDA_HOME}/lib64" ]]; then
+        export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH:-}"
+    fi
     DEVICE_FLAG="--device cuda"
 elif [ "${DEVICE}" = "cpu" ] || [ "${DEVICE}" = "none" ] || [ -z "${DEVICE}" ]; then
     DEVICE_FLAG=""

@@ -22,23 +22,9 @@ conda activate tvm-build-venv
 # Set library path for cmake to find zstd
 export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
 
-# Determine TVM directory based on source selection
-if [ "${TVM_SOURCE}" = "custom" ]; then
-    TVM_DIR="${REPO_ROOT}/tvm"
-    echo "Using custom TVM from ${TVM_DIR}"
-    if [ ! -d "${TVM_DIR}" ]; then
-        echo "Error: Custom TVM directory not found at ${TVM_DIR}"
-        echo "Please clone TVM to ${TVM_DIR} or select bundled TVM option"
-        exit 1
-    fi
-else
-    TVM_DIR="${REPO_ROOT}/mlc-llm/3rdparty/tvm"
-    echo "Using bundled TVM from ${TVM_DIR}"
-    if [ ! -d "${TVM_DIR}" ]; then
-        echo "Error: Bundled TVM directory not found at ${TVM_DIR}"
-        echo "Please ensure mlc-llm is properly initialized with submodules"
-        exit 1
-    fi
+# clone from GitHub (or use existing)
+if [ ! -d "tvm" ]; then
+    git clone --recursive -b mlc https://github.com/mlc-ai/relax.git tvm
 fi
 
 cd "${TVM_DIR}"
@@ -48,43 +34,38 @@ rm -rf build && mkdir build && cd build
 cp ../cmake/config.cmake .
 
 # controls default compilation flags (use sed to replace existing values)
-sed -i '' 's/set(CMAKE_BUILD_TYPE .*/set(CMAKE_BUILD_TYPE Release)/' config.cmake
+sed -i 's/set(CMAKE_BUILD_TYPE .*/set(CMAKE_BUILD_TYPE Release)/' config.cmake
 # LLVM is a must dependency
-sed -i '' 's|set(USE_LLVM .*)|set(USE_LLVM "llvm-config --ignore-libllvm --link-static")|' config.cmake
-sed -i '' 's/set(HIDE_PRIVATE_SYMBOLS .*/set(HIDE_PRIVATE_SYMBOLS ON)/' config.cmake
+sed -i 's|set(USE_LLVM .*)|set(USE_LLVM "llvm-config --ignore-libllvm --link-static")|' config.cmake
+sed -i 's/set(HIDE_PRIVATE_SYMBOLS .*/set(HIDE_PRIVATE_SYMBOLS ON)/' config.cmake
 # GPU SDKs - enable Metal for macOS
-sed -i '' 's/set(USE_CUDA .*/set(USE_CUDA ON)/' config.cmake
-sed -i '' 's/set(USE_ROCM .*/set(USE_ROCM OFF)/' config.cmake
-sed -i '' 's/set(USE_METAL .*/set(USE_METAL OFF)/' config.cmake
-sed -i '' 's/set(USE_VULKAN .*/set(USE_VULKAN OFF)/' config.cmake
-sed -i '' 's/set(USE_OPENCL .*/set(USE_OPENCL OFF)/' config.cmake
+sed -i 's/set(USE_CUDA .*/set(USE_CUDA ON)/' config.cmake
+sed -i 's/set(USE_ROCM .*/set(USE_ROCM OFF)/' config.cmake
+sed -i 's/set(USE_METAL .*/set(USE_METAL OFF)/' config.cmake
+sed -i 's/set(USE_VULKAN .*/set(USE_VULKAN OFF)/' config.cmake
+sed -i 's/set(USE_OPENCL .*/set(USE_OPENCL OFF)/' config.cmake
 
 # Below are options for CUDA, turn on if needed
 # CUDA_ARCH is the cuda compute capability of your GPU.
 # Examples: 89 for 4090, 90a for H100/H200, 100a for B200.
 # Reference: https://developer.nvidia.com/cuda-gpus
-sed -i '' "s/set(CMAKE_CUDA_ARCHITECTURES .*/set(CMAKE_CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})/" config.cmake
-sed -i '' 's/set(USE_CUBLAS .*/set(USE_CUBLAS ON)/' config.cmake
-sed -i '' 's/set(USE_CUTLASS .*/set(USE_CUTLASS ON)/' config.cmake
-sed -i '' 's/set(USE_THRUST .*/set(USE_THRUST ON)/' config.cmake
-sed -i '' 's/set(USE_NVTX .*/set(USE_NVTX OFF)/' config.cmake
+sed -i "s/set(CMAKE_CUDA_ARCHITECTURES .*/set(CMAKE_CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})/" config.cmake
+sed -i 's/set(USE_CUBLAS .*/set(USE_CUBLAS ON)/' config.cmake
+sed -i 's/set(USE_CUTLASS .*/set(USE_CUTLASS OFF)/' config.cmake # known compile failures on CUDA 12+
+sed -i 's/set(USE_THRUST .*/set(USE_THRUST OFF)/' config.cmake # known CHECK macro errors
+sed -i 's/set(USE_NVTX .*/set(USE_NVTX OFF)/' config.cmake
 
-cmake .. && make -j4
+cmake ..
+make -j$(nproc)
 cd ..
 
-# Build wheels and copy to wheels directory
-mkdir -p "${WHEELS_DIR}"
+# # Build wheels and copy to wheels directory
+# mkdir -p "${WHEELS_DIR}"
 
-# Clean CMake cache and Makefiles to avoid Make/Ninja conflict
-# but keep the compiled libraries in build/
-cd build
-rm -f Makefile CMakeCache.txt cmake_install.cmake
-rm -rf CMakeFiles
-cd ..
+# # Build TVM wheel
+# cd python
+# pip install build
+# python -m build --wheel --outdir "${WHEELS_DIR}"
+# cd ..
 
-# Build TVM wheel from the tvm root directory (where pyproject.toml is)
-pip install build
-python -m build --wheel --outdir "${WHEELS_DIR}"
-
-echo "TVM wheels created in ${WHEELS_DIR}"
-
+# echo "TVM wheels created in ${WHEELS_DIR}"
