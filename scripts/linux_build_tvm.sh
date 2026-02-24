@@ -100,6 +100,13 @@ if [ "${BUILD_WHEELS}" = "y" ]; then
     # Build wheel and copy to wheels directory
     mkdir -p "${WHEELS_DIR}"
 
+    # Clean CMake cache and Makefiles to avoid Make/Ninja conflict
+    # but keep the compiled libraries in build/
+    cd build
+    rm -f Makefile CMakeCache.txt cmake_install.cmake
+    rm -rf CMakeFiles
+    cd ..
+
     # Build TVM wheel from the tvm root directory (where pyproject.toml is)
     python -m pip install build
     python -m build --wheel --outdir "${WHEELS_DIR}"
