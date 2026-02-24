@@ -31,5 +31,17 @@ cd ../..
 
 # flashinfer-python==0.4.0 (pulled in by mlc_llm) pins apache-tvm-ffi==0.1.0b15
 # which downgrades the version installed by linux_install_tvm.sh and breaks the
-# tvm Python package. Reinstall the correct version from the local tvm source.
-pip install --force-reinstall -e tvm/3rdparty/tvm-ffi
+# tvm Python package. Reinstall the correct version from the selected TVM source.
+if [ "${TVM_SOURCE}" = "relax" ] || [ "${TVM_SOURCE}" = "custom" ]; then
+    TVM_DIR="${REPO_ROOT}/tvm"
+else
+    TVM_DIR="${REPO_ROOT}/mlc-llm/3rdparty/tvm"
+fi
+
+TVM_FFI_DIR="${TVM_DIR}/3rdparty/tvm-ffi"
+if [ -d "${TVM_FFI_DIR}" ]; then
+    pip install --force-reinstall -e "${TVM_FFI_DIR}"
+else
+    echo "Warning: ${TVM_FFI_DIR} not found, falling back to reinstalling TVM wheel"
+    pip install --force-reinstall "${WHEELS_DIR}"/tvm-*.whl
+fi
