@@ -19,8 +19,8 @@ conda create -y -n tvm-build-venv -c conda-forge \
 
 conda activate tvm-build-venv
 
-# Set library path for cmake to find zstd
-export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
+# Set library path for linker to find zstd and libxml2
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
 
 # Determine TVM directory based on source selection
 if [ "${TVM_SOURCE}" = "custom" ]; then
