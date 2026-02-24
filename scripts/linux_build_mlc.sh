@@ -73,7 +73,7 @@ else
 fi
 
 conda activate ${BUILD_VENV}
-CONDA_PYTHON="$(conda info --base)/envs/${BUILD_VENV}/bin/python"
+CONDA_PYTHON="${CONDA_PREFIX}/bin/python"
 
 if [[ "$(uname)" == "Darwin" ]]; then
     NCORES=$(sysctl -n hw.ncpu)
