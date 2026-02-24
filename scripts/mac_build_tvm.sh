@@ -48,12 +48,19 @@ elif [ "${TVM_SOURCE}" = "relax" ]; then
         echo "TVM is already on mlc branch."
     fi
 else
+    # Clone mlc-llm if it doesn't exist (for bundled TVM)
+    MLC_LLM_DIR="${REPO_ROOT}/mlc-llm"
+    if [ ! -d "${MLC_LLM_DIR}" ]; then
+        echo "mlc-llm not found, cloning from https://github.com/mlc-ai/mlc-llm..."
+        git clone --recursive https://github.com/mlc-ai/mlc-llm "${MLC_LLM_DIR}"
+    fi
+    
     TVM_DIR="${REPO_ROOT}/mlc-llm/3rdparty/tvm"
     echo "Using bundled TVM from ${TVM_DIR}"
     if [ ! -d "${TVM_DIR}" ]; then
         echo "Error: Bundled TVM directory not found at ${TVM_DIR}"
-        echo "Please ensure mlc-llm is properly initialized with submodules"
-        exit 1
+        echo "Initializing submodules..."
+        git -C "${MLC_LLM_DIR}" submodule update --init --recursive
     fi
 fi
 
