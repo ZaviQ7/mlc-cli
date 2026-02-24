@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 WHEELS_DIR="${REPO_ROOT}/wheels"
 CUDA_COMPUTE_CAPABILITY="${1:-86}"
 TVM_SOURCE="${2:-bundled}"  # bundled or custom
+BUILD_WHEELS="${3:-y}"
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
@@ -94,4 +95,17 @@ sed -i 's/set(USE_NVTX .*/set(USE_NVTX OFF)/' config.cmake
 cmake ..
 make -j$(nproc)
 cd ..
+
+if [ "${BUILD_WHEELS}" = "y" ]; then
+    # Build wheel and copy to wheels directory
+    mkdir -p "${WHEELS_DIR}"
+
+    # Build TVM wheel from the tvm root directory (where pyproject.toml is)
+    python -m pip install build
+    python -m build --wheel --outdir "${WHEELS_DIR}"
+
+    echo "TVM wheel created in ${WHEELS_DIR}"
+else
+    echo "Skipping TVM wheel build."
+fi
 

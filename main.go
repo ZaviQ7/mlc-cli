@@ -42,6 +42,7 @@ func main() {
 		platform := CreatePlatform()
 		platform.ConfigureGitHubRepo()
 		platform.ConfigureBuildOptions()
+		platform.ConfigureWheelBuildOption()
 		promptInstall(platform, "cuda")
 		promptBuild(platform, "tvm")
 		promptBuild(platform, "mlc")

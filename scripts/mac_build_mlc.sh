@@ -9,6 +9,7 @@ VULKAN="${4:-n}"
 METAL="${5:-y}"
 OPEN_CL="${6:-n}"
 TVM_SOURCE="${7:-bundled}"  # bundled, relax, or custom
+BUILD_WHEELS="${8:-y}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -86,15 +87,19 @@ printf "%s\n%s\n%s\n%s\n%s\n%s\n\n\n" \
 cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && make -j4
 cd ..
 
-# Build wheel and copy to wheels directory
-mkdir -p "${WHEELS_DIR}"
+if [ "${BUILD_WHEELS}" = "y" ]; then
+    # Build wheel and copy to wheels directory
+    mkdir -p "${WHEELS_DIR}"
 
-cd python
-python -m pip install build
-python -m build --wheel --outdir "${WHEELS_DIR}"
-cd ..
+    cd python
+    python -m pip install build
+    python -m build --wheel --outdir "${WHEELS_DIR}"
+    cd ..
 
-echo "MLC-LLM wheel created in ${WHEELS_DIR}"
+    echo "MLC-LLM wheel created in ${WHEELS_DIR}"
+else
+    echo "Skipping MLC-LLM wheel build."
+fi
 
 conda deactivate
 

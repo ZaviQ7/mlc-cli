@@ -4,6 +4,7 @@ set -e  # Exit on error
 # Args
 BUILD_VENV="${1:-tvm-build-venv}"
 TVM_SOURCE="${2:-bundled}"  # bundled or custom
+BUILD_WHEELS="${3:-y}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -85,19 +86,23 @@ sed -i '' 's/set(USE_OPENCL .*/set(USE_OPENCL OFF)/' config.cmake
 cmake .. && make -j4
 cd ..
 
-# Build wheels and copy to wheels directory
-mkdir -p "${WHEELS_DIR}"
+if [ "${BUILD_WHEELS}" = "y" ]; then
+    # Build wheels and copy to wheels directory
+    mkdir -p "${WHEELS_DIR}"
 
-# Clean CMake cache and Makefiles to avoid Make/Ninja conflict
-# but keep the compiled libraries in build/
-cd build
-rm -f Makefile CMakeCache.txt cmake_install.cmake
-rm -rf CMakeFiles
-cd ..
+    # Clean CMake cache and Makefiles to avoid Make/Ninja conflict
+    # but keep the compiled libraries in build/
+    cd build
+    rm -f Makefile CMakeCache.txt cmake_install.cmake
+    rm -rf CMakeFiles
+    cd ..
 
-# Build TVM wheel from the tvm root directory (where pyproject.toml is)
-pip install build
-python -m build --wheel --outdir "${WHEELS_DIR}"
+    # Build TVM wheel from the tvm root directory (where pyproject.toml is)
+    pip install build
+    python -m build --wheel --outdir "${WHEELS_DIR}"
 
-echo "TVM wheels created in ${WHEELS_DIR}"
+    echo "TVM wheels created in ${WHEELS_DIR}"
+else
+    echo "Skipping TVM wheel build."
+fi
 

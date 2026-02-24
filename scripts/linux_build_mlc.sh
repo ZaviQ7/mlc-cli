@@ -15,6 +15,7 @@ FLASHINFER="${8:-n}"
 CUDA_ARCH="${9:-86}"
 GITHUB_REPO="${10:-https://github.com/mlc-ai/mlc-llm}" # Adds a GITHUB_REPO parameter
 TVM_SOURCE="${11:-bundled}"  # bundled, relax, or custom
+BUILD_WHEELS="${12:-y}"
 
 # Variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -143,14 +144,18 @@ fi
 
 cmake --build . --parallel ${NCORES}
 
-# Build wheel and copy to wheels directory
-mkdir -p "${WHEELS_DIR}"
+if [ "${BUILD_WHEELS}" = "y" ]; then
+    # Build wheel and copy to wheels directory
+    mkdir -p "${WHEELS_DIR}"
 
-cd ../python
-"${CONDA_PYTHON}" -m pip install build
-"${CONDA_PYTHON}" -m build --wheel --outdir "${WHEELS_DIR}"
-cd ../build
+    cd ../python
+    "${CONDA_PYTHON}" -m pip install build
+    "${CONDA_PYTHON}" -m build --wheel --outdir "${WHEELS_DIR}"
+    cd ../build
 
-echo "MLC-LLM wheel created in ${WHEELS_DIR}"
+    echo "MLC-LLM wheel created in ${WHEELS_DIR}"
+else
+    echo "Skipping MLC-LLM wheel build."
+fi
 
 conda deactivate

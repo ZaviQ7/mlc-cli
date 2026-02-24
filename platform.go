@@ -28,6 +28,7 @@ type Platform struct {
 	FlashInfer      string
 	CUDAArch        string
 	TVMSource       string
+	BuildWheels     string
 }
 
 func (p *Platform) build(pkg string) {
@@ -36,16 +37,16 @@ func (p *Platform) build(pkg string) {
 	if pkg == "mlc" {
 		if p.OperatingSystem == "mac" {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL, p.TVMSource)
+				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL, p.TVMSource, p.BuildWheels)
 		} else {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo, p.TVMSource)
+				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo, p.TVMSource, p.BuildWheels)
 		}
 	} else if pkg == "tvm" {
 		if p.OperatingSystem == "mac" {
-			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv, p.TVMSource)
+			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv, p.TVMSource, p.BuildWheels)
 		} else {
-			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.CUDAArch, p.TVMSource)
+			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.CUDAArch, p.TVMSource, p.BuildWheels)
 		}
 	} else {
 		cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv)
@@ -224,6 +225,10 @@ func (p *Platform) ConfigureBuildOptions() {
 		p.OpenCL = promptYesNo("Enable OpenCL support?")
 		p.Metal = "n"
 	}
+}
+
+func (p *Platform) ConfigureWheelBuildOption() {
+	p.BuildWheels = promptYesNo("Build Python wheels after compilation?")
 }
 
 func extractModelNameFromURL(url string) string {
@@ -444,5 +449,6 @@ func CreatePlatform() Platform {
 		FlashInfer:      "",
 		CUDAArch:        "",
 		TVMSource:       "",
+		BuildWheels:     "y",
 	}
 }
