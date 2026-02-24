@@ -9,7 +9,7 @@ TVM_SOURCE="${2:-bundled}"  # bundled or custom
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
-conda env remove -n tvm-build-venv || true
+conda env remove -y -n tvm-build-venv || true
 conda create -y -n tvm-build-venv -c conda-forge \
     "llvmdev=19" \
     "cmake>=3.24" \
