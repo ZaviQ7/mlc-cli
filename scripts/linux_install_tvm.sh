@@ -12,12 +12,14 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 CLI_VENV="${1:-mlc-cli-venv}"
 
 # Create environment if it doesn't exist
+# python_abi=3.13=*_cp313 for flash-infer
 if ! conda env list | awk '{print $1}' | grep -qx "${CLI_VENV}"; then
     conda create -y -n "${CLI_VENV}" -c conda-forge \
         "cmake>=3.24" \
         rust \
         git \
         python=3.13 \
+        "python_abi=3.13=*_cp313" \
         psutil
 fi
 
@@ -34,6 +36,7 @@ if [ "$PYTHON_VERSION" != "3.13" ]; then
         rust \
         git \
         python=3.13 \
+        "python_abi=3.13=*_cp313" \
         psutil
     conda activate "${CLI_VENV}"
 fi
