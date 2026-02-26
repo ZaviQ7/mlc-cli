@@ -9,6 +9,7 @@ MODEL_URL="${2}"
 MODEL_NAME="${3}"
 DEVICE="${4:-cuda}"
 OVERRIDES="${5}"
+MODEL_LIB_PATH="${6}"
 
 # Set CUDA environment variables
 DEVICE_FLAG=""
@@ -73,17 +74,32 @@ if [ -z "${MODEL_NAME}" ] || [ ! -d "${MODEL_PATH}" ]; then
     exit 1
 fi
 cd "${MODEL_PATH}"
+
+# Build the command arguments
+CMD_ARGS=(chat .)
+if [ -n "${DEVICE_FLAG}" ]; then
+    CMD_ARGS+=(${DEVICE_FLAG})
+fi
+if [ -n "${MODEL_LIB_PATH}" ]; then
+    CMD_ARGS+=(--model-lib "${MODEL_LIB_PATH}")
+fi
 if [ -n "${OVERRIDES}" ]; then
+    CMD_ARGS+=(--overrides "${OVERRIDES}")
+fi
+
+# Run with or without JIT depending on whether a compiled library is provided
+if [ -n "${MODEL_LIB_PATH}" ]; then
+    echo "Using pre-compiled model library: ${MODEL_LIB_PATH}"
     if command -v mlc_llm >/dev/null 2>&1; then
-        MLC_JIT_POLICY=REDO mlc_llm chat . ${DEVICE_FLAG} --overrides "${OVERRIDES}"
+        mlc_llm "${CMD_ARGS[@]}"
     else
-        MLC_JIT_POLICY=REDO python -m mlc_llm chat . ${DEVICE_FLAG} --overrides "${OVERRIDES}"
+        python -m mlc_llm "${CMD_ARGS[@]}"
     fi
 else
     if command -v mlc_llm >/dev/null 2>&1; then
-        MLC_JIT_POLICY=REDO mlc_llm chat . ${DEVICE_FLAG}
+        MLC_JIT_POLICY=REDO mlc_llm "${CMD_ARGS[@]}"
     else
-        MLC_JIT_POLICY=REDO python -m mlc_llm chat . ${DEVICE_FLAG}
+        MLC_JIT_POLICY=REDO python -m mlc_llm "${CMD_ARGS[@]}"
     fi
 fi
 

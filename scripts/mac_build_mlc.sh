@@ -79,6 +79,13 @@ else
 fi
 cd mlc-llm/
 
+# flashinfer-python requires nvidia-cudnn-frontend which is not available on macOS
+REQUIREMENTS_FILE="python/requirements.txt"
+if [ -f "${REQUIREMENTS_FILE}" ] && grep -q '^flashinfer-python' "${REQUIREMENTS_FILE}"; then
+    echo "Commenting out flashinfer-python from requirements.txt (not available on macOS)..."
+    sed -i '' 's/^flashinfer-python/# flashinfer-python/' "${REQUIREMENTS_FILE}"
+fi
+
 # create build directory
 mkdir -p build && cd build
 

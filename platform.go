@@ -116,6 +116,27 @@ func promptYesNo(label string) string {
 }
 
 func (p *Platform) run() {
+	// Ask if user has a pre-compiled model library
+	modelLibPath := ""
+	compiledPrompt := promptui.Select{
+		Label: "Use a pre-compiled model library? (skips JIT compilation at runtime)",
+		Items: []string{"No (JIT compile at runtime)", "Yes (use compiled library)"},
+	}
+	_, compiledChoice, err := compiledPrompt.Run()
+	if err != nil {
+		handlePromptError(err)
+	}
+	if compiledChoice == "Yes (use compiled library)" {
+		libPrompt := promptui.Prompt{
+			Label:   "Enter path to compiled model library (.so/.dylib)",
+			Default: "dist/",
+		}
+		modelLibPath, err = libPrompt.Run()
+		if err != nil {
+			handlePromptError(err)
+		}
+	}
+
 	computePrompt := promptui.Select{
 		Label: "Select compute profile",
 		Items: []string{"Really Low", "Low", "Default", "High"},
@@ -137,7 +158,7 @@ func (p *Platform) run() {
 		overrides = "context_window_size=81920;prefill_chunk_size=4096"
 	}
 
-	cmd := exec.Command("bash", "scripts/"+p.OperatingSystem+"_run_model.sh", p.CliEnv, p.ModelURL, p.ModelName, p.Device, overrides)
+	cmd := exec.Command("bash", "scripts/"+p.OperatingSystem+"_run_model.sh", p.CliEnv, p.ModelURL, p.ModelName, p.Device, overrides, modelLibPath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
