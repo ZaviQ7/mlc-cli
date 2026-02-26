@@ -11,6 +11,7 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 # Args
 CLI_VENV="${1:-mlc-cli-venv}"
 TVM_SOURCE="${2:-bundled}"  # bundled, relax, or custom
+INSTALL_MODE="${3:-wheel}"  # source (editable from repo) or wheel (pre-built)
 
 if ! conda env list | awk '{print $1}' | grep -qx "${CLI_VENV}"; then
     conda create -n "${CLI_VENV}" -c conda-forge \
@@ -47,5 +48,11 @@ else
     echo "Warning: No TVM wheel found in ${WHEELS_DIR}. MLC may fail if TVM is not already installed."
 fi
 
-# Install pre-built MLC wheel from wheels directory
-pip install --force-reinstall "${WHEELS_DIR}"/mlc_llm-*.whl
+# install MLC Python package
+if [ "${INSTALL_MODE}" = "wheel" ]; then
+    pip install --force-reinstall "${WHEELS_DIR}"/mlc_llm-*.whl
+else
+    cd mlc-llm/python
+    pip install -e .
+    cd ../..
+fi

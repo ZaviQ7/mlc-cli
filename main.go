@@ -126,6 +126,7 @@ func main() {
 
 		case "Install Wheels Only":
 			fmt.Println("\nInstalling pre-built wheels into the CLI environment...")
+			platform.InstallMode = "wheel"
 			platform.install("tvm")
 			platform.install("mlc")
 			fmt.Println("\n" + Success + "Wheels installed successfully.")

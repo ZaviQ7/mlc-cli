@@ -30,6 +30,7 @@ type Platform struct {
 	TVMSource       string
 	BuildWheels     string
 	ForceClone      string
+	InstallMode     string
 }
 
 func (p *Platform) build(pkg string) {
@@ -79,7 +80,7 @@ func (p *Platform) install(pkg string) {
 	case "tvm", "wheels":
 		cmd = exec.Command("bash", scriptPath, p.CliEnv)
 	case "mlc":
-		cmd = exec.Command("bash", scriptPath, p.CliEnv, p.TVMSource)
+		cmd = exec.Command("bash", scriptPath, p.CliEnv, p.TVMSource, p.InstallMode)
 	default:
 		cmd = exec.Command("bash", scriptPath)
 	}
@@ -511,5 +512,6 @@ func CreatePlatform() *Platform {
 		TVMSource:       "",
 		BuildWheels:     "y",
 		ForceClone:      "n",
+		InstallMode:     "source",
 	}
 }

@@ -11,6 +11,7 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 # Args
 CLI_VENV="${1:-mlc-cli-venv}"
 TVM_SOURCE="${2:-bundled}"  # bundled, relax, or custom
+INSTALL_MODE="${3:-source}"  # source (editable from repo) or wheel (pre-built)
 
 # Create environment if it doesn't exist
 # python_abi=3.13=*_cp313 for flash-infer
@@ -35,10 +36,13 @@ else
 fi
 
 # install MLC Python package
-cd mlc-llm/python
-
-pip install -e .
-cd ../..
+if [ "${INSTALL_MODE}" = "wheel" ]; then
+    pip install --force-reinstall "${WHEELS_DIR}"/mlc_llm-*.whl
+else
+    cd mlc-llm/python
+    pip install -e .
+    cd ../..
+fi
 
 # flashinfer-python==0.4.0 (pulled in by mlc_llm) pins apache-tvm-ffi==0.1.0b15
 # which downgrades the version installed by linux_install_tvm.sh and breaks the
