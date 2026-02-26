@@ -19,4 +19,7 @@ go version
 # Clean up
 tar -xzf go1.24.0.linux-amd64.tar.gz
 
+# Reload shell
+source ~/.bashrc
+
 echo "Go installed successfully"
