@@ -39,15 +39,52 @@ func main() {
 	}
 
 	if selection == "Build" {
+		buildPrompt := promptui.Select{
+			Label: "Select build action",
+			Items: []string{
+				"Full Build + Install",
+				"Build Only (no install)",
+				"Install Wheels Only",
+			},
+		}
+		_, buildAction, err := buildPrompt.Run()
+		if err != nil {
+			if errors.Is(err, promptui.ErrInterrupt) {
+				fmt.Println("\nExiting...")
+				os.Exit(0)
+			}
+			cliError("Error getting selection: ", err)
+		}
+
 		platform := CreatePlatform()
-		platform.ConfigureGitHubRepo()
-		platform.ConfigureBuildOptions()
-		platform.ConfigureWheelBuildOption()
-		promptInstall(platform, "cuda")
-		promptBuild(platform, "tvm")
-		promptBuild(platform, "mlc")
-		promptInstall(platform, "tvm")
-		promptInstall(platform, "mlc")
+
+		switch buildAction {
+		case "Full Build + Install":
+			platform.ConfigureGitHubRepo()
+			platform.ConfigureRepoAction()
+			platform.ConfigureBuildOptions()
+			platform.ConfigureWheelBuildOption()
+			promptInstall(platform, "cuda")
+			promptBuild(platform, "tvm")
+			promptBuild(platform, "mlc")
+			promptInstall(platform, "tvm")
+			promptInstall(platform, "mlc")
+
+		case "Build Only (no install)":
+			platform.ConfigureGitHubRepo()
+			platform.ConfigureRepoAction()
+			platform.ConfigureBuildOptions()
+			platform.ConfigureWheelBuildOption()
+			promptInstall(platform, "cuda")
+			promptBuild(platform, "tvm")
+			promptBuild(platform, "mlc")
+
+		case "Install Wheels Only":
+			fmt.Println("\nInstalling pre-built wheels into the CLI environment...")
+			platform.install("tvm")
+			platform.install("mlc")
+			fmt.Println("\n" + Success + "Wheels installed successfully.")
+		}
 
 	} else if selection == "Run" {
 		platform := CreatePlatform()
@@ -62,7 +99,7 @@ func main() {
 	}
 }
 
-func promptQuantizeModel(platform Platform) {
+func promptQuantizeModel(platform *Platform) {
 	promptPath := promptui.Prompt{
 		Label: "Enter Hugging Face Model Path (or local path)",
 	}
@@ -147,7 +184,7 @@ func promptQuantizeModel(platform Platform) {
 	fmt.Println("\n" + Success + "Quantization Complete! Model saved to " + outputDir)
 }
 
-func promptInstall(platform Platform, pkg string) {
+func promptInstall(platform *Platform, pkg string) {
 	prompt := promptui.Select{
 		Label: "Install " + pkg + "?",
 		Items: []string{"Yes", "No"},
@@ -166,7 +203,7 @@ func promptInstall(platform Platform, pkg string) {
 	}
 }
 
-func promptBuild(platform Platform, pkg string) {
+func promptBuild(platform *Platform, pkg string) {
 	prompt := promptui.Select{
 		Label: "Build " + pkg + " from source?",
 		Items: []string{"Yes", "No"},

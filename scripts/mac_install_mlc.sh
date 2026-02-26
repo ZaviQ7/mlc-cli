@@ -39,5 +39,13 @@ if [ "$PYTHON_VERSION" != "3.13" ]; then
     conda activate "${CLI_VENV}"
 fi
 
+# Install TVM wheel first (MLC depends on TVM at runtime)
+if ls "${WHEELS_DIR}"/tvm-*.whl 1>/dev/null 2>&1; then
+    echo "Installing TVM wheel (dependency for MLC)..."
+    pip install --force-reinstall "${WHEELS_DIR}"/tvm-*.whl
+else
+    echo "Warning: No TVM wheel found in ${WHEELS_DIR}. MLC may fail if TVM is not already installed."
+fi
+
 # Install pre-built MLC wheel from wheels directory
 pip install --force-reinstall "${WHEELS_DIR}"/mlc_llm-*.whl

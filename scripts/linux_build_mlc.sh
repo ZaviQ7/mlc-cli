@@ -16,6 +16,7 @@ CUDA_ARCH="${9:-86}"
 GITHUB_REPO="${10:-https://github.com/mlc-ai/mlc-llm}" # Adds a GITHUB_REPO parameter
 TVM_SOURCE="${11:-bundled}"  # bundled, relax, or custom
 BUILD_WHEELS="${12:-y}"
+FORCE_CLONE="${13:-n}"
 
 # Variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,6 +44,10 @@ echo "${BUILD_VENV} environment created successfully"
 
 # Set up TVM source if using relax or custom
 if [ "${TVM_SOURCE}" = "relax" ]; then
+    if [ "${FORCE_CLONE}" = "y" ] && [ -d "${TVM_SOURCE_DIR}" ]; then
+        echo "Force re-clone: removing existing ${TVM_SOURCE_DIR}..."
+        rm -rf "${TVM_SOURCE_DIR}"
+    fi
     if [ ! -d "${TVM_SOURCE_DIR}" ]; then
         echo "Cloning mlc-ai/relax on mlc branch..."
         git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_SOURCE_DIR}"
@@ -66,6 +71,10 @@ else
 fi
 
 # Check if mlc-llm directory exists
+if [ "${FORCE_CLONE}" = "y" ] && [ -d "mlc-llm" ]; then
+    echo "Force re-clone: removing existing mlc-llm..."
+    rm -rf mlc-llm
+fi
 if [ ! -d "mlc-llm" ]; then
     echo "Cloning mlc-llm from ${GITHUB_REPO}..."
     git clone --recursive "${GITHUB_REPO}" mlc-llm

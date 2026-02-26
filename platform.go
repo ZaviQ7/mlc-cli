@@ -29,6 +29,7 @@ type Platform struct {
 	CUDAArch        string
 	TVMSource       string
 	BuildWheels     string
+	ForceClone      string
 }
 
 func (p *Platform) build(pkg string) {
@@ -37,16 +38,16 @@ func (p *Platform) build(pkg string) {
 	if pkg == "mlc" {
 		if p.OperatingSystem == "mac" {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL, p.TVMSource, p.BuildWheels)
+				p.MLCBuildEnv, p.CUDA, p.ROCM, p.Vulkan, p.Metal, p.OpenCL, p.TVMSource, p.BuildWheels, p.ForceClone)
 		} else {
 			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh",
-				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo, p.TVMSource, p.BuildWheels)
+				p.MLCBuildEnv, p.CUDA, p.Cutlass, p.CuBLAS, p.ROCM, p.Vulkan, p.OpenCL, p.FlashInfer, p.CUDAArch, p.GitHubRepo, p.TVMSource, p.BuildWheels, p.ForceClone)
 		}
 	} else if pkg == "tvm" {
 		if p.OperatingSystem == "mac" {
-			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv, p.TVMSource, p.BuildWheels)
+			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv, p.TVMSource, p.BuildWheels, p.ForceClone)
 		} else {
-			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.CUDAArch, p.TVMSource, p.BuildWheels)
+			cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.CUDAArch, p.TVMSource, p.BuildWheels, p.ForceClone)
 		}
 	} else {
 		cmd = exec.Command("bash", "scripts/"+p.OperatingSystem+"_build_"+pkg+".sh", p.TVMBuildEnv)
@@ -155,6 +156,44 @@ func (p *Platform) ConfigureGitHubRepo() {
 	p.GitHubRepo, err = gitHubRepoPrompt.Run()
 	if err != nil {
 		handlePromptError(err)
+	}
+}
+
+func (p *Platform) ConfigureRepoAction() {
+	// Check if mlc-llm or tvm directories already exist
+	mlcExists := false
+	tvmExists := false
+	if _, err := os.Stat("mlc-llm"); err == nil {
+		mlcExists = true
+	}
+	if _, err := os.Stat("tvm"); err == nil {
+		tvmExists = true
+	}
+
+	if mlcExists || tvmExists {
+		var existingDirs string
+		if mlcExists && tvmExists {
+			existingDirs = "mlc-llm and tvm"
+		} else if mlcExists {
+			existingDirs = "mlc-llm"
+		} else {
+			existingDirs = "tvm"
+		}
+
+		repoActionPrompt := promptui.Select{
+			Label: fmt.Sprintf("Existing repo(s) found: %s. What would you like to do?", existingDirs),
+			Items: []string{
+				"Keep existing (skip clone)",
+				"Delete and re-clone",
+			},
+		}
+		_, repoAction, err := repoActionPrompt.Run()
+		if err != nil {
+			handlePromptError(err)
+		}
+		if repoAction == "Delete and re-clone" {
+			p.ForceClone = "y"
+		}
 	}
 }
 
@@ -382,7 +421,7 @@ func CheckCudaInstalled() bool {
 	return err == nil
 }
 
-func CreatePlatform() Platform {
+func CreatePlatform() *Platform {
 	OperatingSystem := ""
 	TvmBuildEnv := ""
 	MLCBuildEnv := ""
@@ -430,7 +469,7 @@ func CreatePlatform() Platform {
 		handlePromptError(err)
 	}
 
-	return Platform{
+	return &Platform{
 		OperatingSystem: OperatingSystem,
 		TVMBuildEnv:     TvmBuildEnv,
 		MLCBuildEnv:     MLCBuildEnv,
@@ -450,5 +489,6 @@ func CreatePlatform() Platform {
 		CUDAArch:        "",
 		TVMSource:       "",
 		BuildWheels:     "y",
+		ForceClone:      "n",
 	}
 }

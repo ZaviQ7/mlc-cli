@@ -5,6 +5,7 @@ set -e  # Exit on error
 BUILD_VENV="${1:-tvm-build-venv}"
 TVM_SOURCE="${2:-bundled}"  # bundled or custom
 BUILD_WHEELS="${3:-y}"
+FORCE_CLONE="${4:-n}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -36,6 +37,10 @@ if [ "${TVM_SOURCE}" = "custom" ]; then
 elif [ "${TVM_SOURCE}" = "relax" ]; then
     TVM_DIR="${REPO_ROOT}/tvm"
     echo "Using mlc-ai/relax (mlc branch) at ${TVM_DIR}"
+    if [ "${FORCE_CLONE}" = "y" ] && [ -d "${TVM_DIR}" ]; then
+        echo "Force re-clone: removing existing ${TVM_DIR}..."
+        rm -rf "${TVM_DIR}"
+    fi
     if [ ! -d "${TVM_DIR}" ]; then
         echo "Cloning mlc-ai/relax on mlc branch..."
         git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_DIR}"
@@ -51,6 +56,10 @@ elif [ "${TVM_SOURCE}" = "relax" ]; then
 else
     # Clone mlc-llm if it doesn't exist (for bundled TVM)
     MLC_LLM_DIR="${REPO_ROOT}/mlc-llm"
+    if [ "${FORCE_CLONE}" = "y" ] && [ -d "${MLC_LLM_DIR}" ]; then
+        echo "Force re-clone: removing existing ${MLC_LLM_DIR}..."
+        rm -rf "${MLC_LLM_DIR}"
+    fi
     if [ ! -d "${MLC_LLM_DIR}" ]; then
         echo "mlc-llm not found, cloning from https://github.com/mlc-ai/mlc-llm..."
         git clone --recursive https://github.com/mlc-ai/mlc-llm "${MLC_LLM_DIR}"

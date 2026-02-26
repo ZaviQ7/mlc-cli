@@ -10,6 +10,7 @@ METAL="${5:-y}"
 OPEN_CL="${6:-n}"
 TVM_SOURCE="${7:-bundled}"  # bundled, relax, or custom
 BUILD_WHEELS="${8:-y}"
+FORCE_CLONE="${9:-n}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -19,6 +20,10 @@ WHEELS_DIR="${REPO_ROOT}/wheels"
 # Empty string = use bundled TVM (mlc-llm/3rdparty/tvm)
 if [ "${TVM_SOURCE}" = "relax" ]; then
     TVM_SOURCE_DIR="${REPO_ROOT}/tvm"
+    if [ "${FORCE_CLONE}" = "y" ] && [ -d "${TVM_SOURCE_DIR}" ]; then
+        echo "Force re-clone: removing existing ${TVM_SOURCE_DIR}..."
+        rm -rf "${TVM_SOURCE_DIR}"
+    fi
     if [ ! -d "${TVM_SOURCE_DIR}" ]; then
         echo "Cloning mlc-ai/relax on mlc branch..."
         git clone --recursive -b mlc https://github.com/mlc-ai/relax.git "${TVM_SOURCE_DIR}"
@@ -62,6 +67,10 @@ export DYLD_LIBRARY_PATH="$CONDA_PREFIX/lib:$DYLD_LIBRARY_PATH"
 export MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d. -f1)
 
 # clone from GitHub (or use existing)
+if [ "${FORCE_CLONE}" = "y" ] && [ -d "mlc-llm" ]; then
+    echo "Force re-clone: removing existing mlc-llm..."
+    rm -rf mlc-llm
+fi
 if [ ! -d "mlc-llm" ]; then
     echo "Cloning mlc-llm..."
     git clone --recursive https://github.com/mlc-ai/mlc-llm.git
