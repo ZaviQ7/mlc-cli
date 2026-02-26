@@ -133,15 +133,28 @@ Convert raw model weights (e.g. from HuggingFace) to MLC format with quantizatio
 
 In interactive mode, the tool lists all models in your `models/` directory and all supported quantization options.
 
+**Quantization naming format: `q{A}f{B}_{id}`**
+
+The format follows the convention from the MLC-LLM quantization docs:
+
+| Part | Meaning | Examples |
+| :--- | :--- | :--- |
+| `q{A}` | **Weight bits** — number of bits for storing weights. Lower = smaller model, less VRAM, some quality loss. | `q4` = 4-bit, `q3` = 3-bit, `q8` = 8-bit |
+| `q0` | **No quantization** — weights kept at full precision | `q0f16` = full precision float16 |
+| `f{B}` | **Activation bits** — number of bits for storing activations during inference | `f16` = float16, `f32` = float32 |
+| `_{id}` | **Algorithm identifier** — distinguishes different quantization algorithms (e.g. symmetric, non-symmetric, AWQ) | `_1` = default group quant, `_ft` = FasterTransformer, `_awq` = AWQ |
+
+MLC-LLM also supports **weight-activation FP8 quantization** on CUDA with formats like `e4m3_e4m3_f16` and `e5m2_e5m2_f16`, where both weights and activations are quantized to FP8.
+
 **Supported quantizations:**
 
 | Code | Description |
 | :--- | :--- |
-| `q4f16_1` | 4-bit group quantization, float16 |
-| `q4f16_ft` | 4-bit FasterTransformer, float16 |
-| `q4f32_1` | 4-bit group quantization, float32 |
-| `q3f16_1` | 3-bit group quantization, float16 |
-| `q8f16_1` | 8-bit group quantization, float16 |
+| `q4f16_1` | 4-bit group quantization, float16, NK layout |
+| `q4f16_ft` | 4-bit FasterTransformer quantization, float16 |
+| `q4f32_1` | 4-bit group quantization, float32, NK layout |
+| `q3f16_1` | 3-bit group quantization, float16, NK layout |
+| `q8f16_1` | 8-bit group quantization, float16, NK layout |
 | `q0f16` | No quantization, float16 |
 | `q0f32` | No quantization, float32 |
 
