@@ -4,7 +4,7 @@
 
 ## 🚀 Why use this?
 
-> Prebuilt wheels for Mac & Linux on https://mlc.ai/wheels are are broken or not compatible
+> Prebuilt wheels for Mac & Linux on https://mlc.ai/wheels are broken or not compatible
 
 **mlc-cli** solves this by:
 
@@ -16,12 +16,14 @@
 
 ## 🛠️ Prerequisites
 
-- **Go** (1.21+) — If you don't have Go installed,   ```bash
-   # Linux
-   ./install_go.sh
-   # macOS
-   brew install go
-   ```
+- **Go** (1.21+) — If you don't have Go installed:
+  ```bash
+  # Linux
+  ./install_go.sh
+  
+  # macOS
+  brew install go
+  ```
 - **Git**
 - **Conda** (Optional, the tool can install it for you)
 
@@ -30,7 +32,7 @@
 ### 1. Installation
 
 ```bash
-git clone https://github.com/mlc-ai/mlc-cli.git
+git clone https://github.com/ballinyouup/mlc-cli.git
 cd mlc-cli
 ```
 
@@ -198,7 +200,7 @@ This CLI prepares the environment required to build the Android APK.
 | **Linux** | ✅ Verified | CUDA, ROCm, Vulkan supported |
 | **Mac (M1/M2/M3)** | ✅ Verified | Metal support |
 | **Android** | ✅ Verified | Manual deployment required |
-| **Windows** | ⚠️ Experimental | Not fully tested; use WSL |
+| **Windows** | ⚠️ Requires WSL | Use WSL or Git Bash |
 
 ## 🧪 Verified Models
 
@@ -210,7 +212,7 @@ The tool is tested with the following HuggingFace models:
 
 1. **Deploy Menu:** The "Deploy" option in interactive mode shows a placeholder message. See the Android Development section for deployment instructions.
 
-2. **CUDA on macOS:** CUDA-specific options (cutlass, flashinfer, etc.) are not available on macOS and The script automatically disables these.
+2. **CUDA on macOS:** CUDA-specific options (cutlass, flashinfer, etc.) are not available on macOS. The script automatically disables these.
 
 ## 📄 License
 
